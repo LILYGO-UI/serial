@@ -1,0 +1,47 @@
+schema_version = 1
+
+[project]
+package = "lilygo-ui-serial"
+version = "0.1.0"
+app_id = "cc.lilygo.ui.Serial"
+title = "Serial"
+summary = "Serial port debugging tool"
+description = "Scan and configure serial ports, inspect received data in ASCII or HEX, send data, and control RTS, DTR, and BREAK."
+license = "MIT"
+# LPM requires HTTPS URLs. This local application is not published; replace
+# these reserved .invalid placeholders with real project URLs before publishing.
+source_repo = "https://example.invalid/lilygo-ui-serial"
+homepage = "https://example.invalid/lilygo-ui-serial"
+categories = ["Development"]
+
+[[project.authors]]
+name = "lbuque"
+email = "110239031@qq.com"
+
+[project.assets]
+icon = "assets/app-icon.png"
+
+[[project.assets.screenshots]]
+path = "assets/previews/preview1.png"
+caption = "Serial port settings and receive console"
+
+[[project.permissions]]
+id = "serial"
+reason = "Discover serial devices, read and write serial data, and control modem lines"
+
+[project.compatibility]
+architectures = ["arm64"]
+min_appkit_version = "0.1.0"
+
+[project.launcher]
+order = 90
+
+[build]
+host_preset = "host-simulator"
+cross_preset = "cm0-cross"
+package_dir = "dist"
+
+[deploy]
+host = "raspberrypi.local"
+user = "pi"
+port = 22
