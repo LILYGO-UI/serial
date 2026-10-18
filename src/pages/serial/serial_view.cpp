@@ -179,7 +179,11 @@ lv_obj_t *View::create(lv_obj_t *parent, const char *application_name)
     lv_obj_set_flex_align(titles, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     auto *title = label(titles, application_name, 36, color_container_title);
     lv_obj_set_name_static(title, "app_title");
-    label(titles, "SERIAL CONSOLE", 14, color_secondary);
+    lv_obj_set_width(title, LV_PCT(100));
+    lv_label_set_long_mode(title, LV_LABEL_LONG_DOT);
+    subtitle_ = label(titles, "SERIAL CONSOLE", 14, color_secondary);
+    lv_obj_set_width(subtitle_, LV_PCT(100));
+    lv_label_set_long_mode(subtitle_, LV_LABEL_LONG_DOT);
     badge_ = box(header_, LV_FLEX_FLOW_ROW, 6);
     lv_obj_set_size(badge_, LV_SIZE_CONTENT, LV_SIZE_CONTENT);
     lv_obj_set_style_pad_hor(badge_, 12, 0);
@@ -189,6 +193,12 @@ lv_obj_t *View::create(lv_obj_t *parent, const char *application_name)
     lv_obj_set_style_bg_opa(badge_, LV_OPA_COVER, 0);
     badge_text_ = label(badge_, "Offline", 14, color_secondary);
     lv_obj_set_name_static(badge_text_, "connection_badge");
+    hide_keyboard_ = button(header_, "Hide keyboard", "hide_keyboard", event, this);
+    font(lv_obj_get_child(hide_keyboard_, 0), 14);
+    lv_obj_add_flag(hide_keyboard_, LV_OBJ_FLAG_HIDDEN);
+    settings_ = button(header_, "Settings", "settings_button", event, this);
+    lv_obj_set_width(settings_, 96);
+    font(lv_obj_get_child(settings_, 0), 14);
 
     error_banner_ = box(surface_, LV_FLEX_FLOW_COLUMN, 0);
     lv_obj_set_name_static(error_banner_, "error_banner");
@@ -203,13 +213,16 @@ lv_obj_t *View::create(lv_obj_t *parent, const char *application_name)
     lv_obj_set_flex_grow(body_, 1);
     lv_obj_set_style_pad_hor(body_, 20, 0);
     lv_obj_set_style_pad_bottom(body_, 20, 0);
-    lv_obj_add_flag(body_, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_scroll_dir(body_, LV_DIR_VER);
-    lv_obj_set_scrollbar_mode(body_, LV_SCROLLBAR_MODE_AUTO);
     lv_obj_set_flex_align(body_, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
 
     sidebar_ = box(body_, LV_FLEX_FLOW_COLUMN, 14);
     lv_obj_set_name_static(sidebar_, "settings_panel");
+    lv_obj_set_size(sidebar_, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_flex_align(sidebar_, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
+    lv_obj_add_flag(sidebar_, LV_OBJ_FLAG_HIDDEN);
+    lv_obj_add_flag(sidebar_, LV_OBJ_FLAG_SCROLLABLE);
+    lv_obj_set_scroll_dir(sidebar_, LV_DIR_VER);
+    lv_obj_set_scrollbar_mode(sidebar_, LV_SCROLLBAR_MODE_AUTO);
     connection_      = card(sidebar_, "connection_card");
     auto *port_row   = box(connection_, LV_FLEX_FLOW_ROW, 8);
     auto *port_label = label(port_row, "Connection", 22, color_container_title);
@@ -240,12 +253,12 @@ lv_obj_t *View::create(lv_obj_t *parent, const char *application_name)
     lv_obj_set_width(status_, LV_PCT(100));
     lv_obj_set_name_static(status_, "connection_status");
 
-    auto *lines      = card(sidebar_, "line_card");
-    auto *line_title = box(lines, LV_FLEX_FLOW_ROW, 8);
+    lines_           = card(sidebar_, "line_card");
+    auto *line_title = box(lines_, LV_FLEX_FLOW_ROW, 8);
     auto *lt         = label(line_title, "Line control", 22, color_container_title);
     lv_obj_set_flex_grow(lt, 1);
     label(line_title, "OUTPUT", 14, color_secondary);
-    row            = box(lines, LV_FLEX_FLOW_ROW, 8);
+    row            = box(lines_, LV_FLEX_FLOW_ROW, 8);
     auto make_line = [&](const char *text, const char *name) {
         auto *cell = box(row, LV_FLEX_FLOW_COLUMN, 8);
         lv_obj_set_width(cell, 0);
@@ -256,15 +269,22 @@ lv_obj_t *View::create(lv_obj_t *parent, const char *application_name)
     rts_   = make_line("RTS", "line_rts");
     dtr_   = make_line("DTR", "line_dtr");
     break_ = make_line("BREAK", "line_break");
+    auto *line_hint =
+        label(lines_, "Available while connected. RTS is managed by the driver with RTS/CTS flow control.", 14,
+              color_secondary);
+    lv_obj_set_width(line_hint, LV_PCT(100));
 
-    workspace_ = box(body_, LV_FLEX_FLOW_COLUMN, 14);
+    workspace_ = box(body_, LV_FLEX_FLOW_COLUMN, 0);
     lv_obj_set_name_static(workspace_, "workspace");
+    lv_obj_set_size(workspace_, LV_PCT(100), LV_PCT(100));
+    lv_obj_set_flex_align(workspace_, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START, LV_FLEX_ALIGN_START);
     receiver_      = card(workspace_, "receive_card");
     row            = box(receiver_, LV_FLEX_FLOW_ROW, 8);
     auto *rx_title = label(row, "Receive", 22, color_container_title);
     lv_obj_set_flex_grow(rx_title, 1);
     segments(row, rx_ascii_, rx_hex_, "rx_ascii", "rx_hex", event, this);
     auto *options    = box(receiver_, LV_FLEX_FLOW_ROW_WRAP, 12);
+    receive_options_ = options;
     auto make_option = [&](const char *text, const char *name) {
         auto *pair = box(options, LV_FLEX_FLOW_ROW, 8);
         lv_obj_set_width(pair, LV_SIZE_CONTENT);
@@ -289,7 +309,7 @@ lv_obj_t *View::create(lv_obj_t *parent, const char *application_name)
     lv_obj_set_width(log_, LV_PCT(100));
     empty_ = box(log_scroll_, LV_FLEX_FLOW_COLUMN, 8);
     lv_obj_set_style_pad_ver(empty_, 4, 0);
-    auto *hint = label(empty_, "Connect a port to see incoming data.", 14, color_secondary);
+    auto *hint = label(empty_, "Open Settings to connect a serial port.", 14, color_secondary);
     lv_obj_set_width(hint, LV_PCT(100));
     lv_obj_set_style_text_align(hint, LV_TEXT_ALIGN_CENTER, 0);
     row       = box(receiver_, LV_FLEX_FLOW_ROW, 8);
@@ -301,6 +321,21 @@ lv_obj_t *View::create(lv_obj_t *parent, const char *application_name)
     font(lv_obj_get_child(clear_, 0), 14);
     lv_obj_set_height(clear_, 34);
 
+    splitter_ = box(workspace_, LV_FLEX_FLOW_COLUMN, 0);
+    lv_obj_set_name_static(splitter_, "pane_splitter");
+    lv_obj_add_flag(splitter_, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_add_flag(splitter_, LV_OBJ_FLAG_PRESS_LOCK);
+    lv_obj_remove_flag(splitter_, LV_OBJ_FLAG_CLICK_FOCUSABLE);
+    lv_obj_remove_flag(splitter_, LV_OBJ_FLAG_SCROLL_CHAIN);
+    for (auto code : {LV_EVENT_PRESSED, LV_EVENT_PRESSING, LV_EVENT_RELEASED, LV_EVENT_PRESS_LOST})
+        lv_obj_add_event_cb(splitter_, event, code, this);
+    lv_obj_set_flex_align(splitter_, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER, LV_FLEX_ALIGN_CENTER);
+    splitter_grip_ = box(splitter_, LV_FLEX_FLOW_COLUMN, 0);
+    lv_obj_remove_flag(splitter_grip_, LV_OBJ_FLAG_CLICKABLE);
+    lv_obj_set_style_bg_color(splitter_grip_, lv_color_hex(color_border), 0);
+    lv_obj_set_style_bg_opa(splitter_grip_, LV_OPA_COVER, 0);
+    lv_obj_set_style_radius(splitter_grip_, LV_RADIUS_CIRCLE, 0);
+
     composer_      = card(workspace_, "send_card");
     row            = box(composer_, LV_FLEX_FLOW_ROW, 8);
     auto *tx_title = label(row, "Send", 22, color_container_title);
@@ -308,7 +343,8 @@ lv_obj_t *View::create(lv_obj_t *parent, const char *application_name)
     segments(row, tx_ascii_, tx_hex_, "tx_ascii", "tx_hex", event, this);
     input_ = lv_textarea_create(composer_);
     lv_obj_set_name_static(input_, "send_input");
-    lv_obj_set_size(input_, LV_PCT(100), 76);
+    lv_obj_set_size(input_, LV_PCT(100), 0);
+    lv_obj_set_flex_grow(input_, 1);
     lv_textarea_set_max_length(input_, 16384);
     lv_textarea_set_placeholder_text(input_, "Type an ASCII message...");
     font(input_, 22);
@@ -345,6 +381,8 @@ void View::destroy() noexcept
     timer_ = nullptr;
     if (surface_) lv_obj_delete(surface_);
     surface_ = header_ = body_ = sidebar_ = workspace_ = connection_ = receiver_ = composer_ = nullptr;
+    subtitle_ = settings_ = lines_ = nullptr;
+    receive_options_ = splitter_ = splitter_grip_ = hide_keyboard_ = nullptr;
     error_banner_ = error_text_ = nullptr;
     badge_ = badge_text_ = scan_ = port_ = baud_ = data_ = parity_ = stop_ = flow_ = nullptr;
     connect_ = connect_text_ = status_ = rts_ = dtr_ = break_ = nullptr;
@@ -352,6 +390,8 @@ void View::destroy() noexcept
     log_scroll_ = log_ = empty_ = counters_ = input_ = ending_ = send_ = keyboard_ = nullptr;
     port_options_.clear();
     displayed_log_.clear();
+    receive_share_     = 100;
+    dragging_splitter_ = false;
 }
 
 void View::changed(lv_observer_t *observer, lv_subject_t *)
@@ -378,12 +418,20 @@ void View::event(lv_event_t *e)
         self.show_keyboard(false);
         return;
     }
+    if (target == self.splitter_) {
+        self.drag_splitter(e);
+        return;
+    }
     if (target == self.input_) {
-        self.show_keyboard(true);
+        if (lv_obj_has_flag(self.sidebar_, LV_OBJ_FLAG_HIDDEN)) self.show_keyboard(true);
         return;
     }
     if (code == LV_EVENT_CLICKED) {
-        if (target == self.scan_)
+        if (target == self.settings_)
+            self.show_settings(lv_obj_has_flag(self.sidebar_, LV_OBJ_FLAG_HIDDEN));
+        else if (target == self.hide_keyboard_)
+            self.show_keyboard(false);
+        else if (target == self.scan_)
             vm.scan_ports();
         else if (target == self.connect_)
             vm.toggle_connection();
@@ -434,7 +482,8 @@ void View::read_settings()
 void View::refresh()
 {
     if (!surface_ || !send_) return;
-    const bool connected = view_model_.connected();
+    const bool connected        = view_model_.connected();
+    const bool had_error_banner = !lv_obj_has_flag(error_banner_, LV_OBJ_FLAG_HIDDEN);
     std::string options;
     for (const auto &port : view_model_.ports()) {
         if (!options.empty()) options += '\n';
@@ -489,18 +538,28 @@ void View::refresh()
     lv_label_set_text(counters_, counters);
     lv_textarea_set_placeholder_text(input_, view_model_.tx_hex() ? "48 65 6C 6C 6F" : "Type an ASCII message...");
     const auto scroll = lv_obj_get_scroll_y(log_scroll_);
-    auto text = view_model_.log_text();
+    auto text         = view_model_.log_text();
     if (text != displayed_log_) {
-        displayed_log_    = std::move(text);
+        displayed_log_ = std::move(text);
         lv_label_set_text(log_, displayed_log_.c_str());
     }
     if (displayed_log_.empty()) {
+        lv_label_set_text(lv_obj_get_child(empty_, 0),
+                          connected ? "Waiting for incoming data..." : "Open Settings to connect a serial port.");
         lv_obj_remove_flag(empty_, LV_OBJ_FLAG_HIDDEN);
         lv_obj_add_flag(log_, LV_OBJ_FLAG_HIDDEN);
     } else {
         lv_obj_add_flag(empty_, LV_OBJ_FLAG_HIDDEN);
         lv_obj_remove_flag(log_, LV_OBJ_FLAG_HIDDEN);
     }
+    if (!lv_obj_has_flag(keyboard_, LV_OBJ_FLAG_HIDDEN) && (had_error_banner || view_model_.error())) apply_layout();
+    sync_log_scroll(scroll);
+}
+
+void View::sync_log_scroll(std::int32_t previous)
+{
+    // Hidden settings/keyboard states do not interrupt polling or reset the reader's position.
+    if (lv_obj_has_flag(workspace_, LV_OBJ_FLAG_HIDDEN) || lv_obj_has_flag(receiver_, LV_OBJ_FLAG_HIDDEN)) return;
     // Measure only the visible content before bounding the scroll destination.
     lv_obj_update_layout(log_scroll_);
     if (displayed_log_.empty()) {
@@ -508,7 +567,7 @@ void View::refresh()
     } else if (view_model_.autoscroll()) {
         lv_obj_scroll_to_y(log_scroll_, LV_COORD_MAX, LV_ANIM_OFF);
     } else {
-        lv_obj_scroll_to_y(log_scroll_, scroll, LV_ANIM_OFF);
+        lv_obj_scroll_to_y(log_scroll_, previous, LV_ANIM_OFF);
     }
 }
 
@@ -536,6 +595,23 @@ void View::fit_port_text()
     lv_dropdown_set_text(port_, text.c_str());
 }
 
+void View::show_settings(bool visible)
+{
+    for (auto *object : {port_, baud_, data_, parity_, stop_, flow_, ending_}) lv_dropdown_close(object);
+    show_keyboard(false);
+    if (visible) {
+        lv_obj_add_flag(workspace_, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(sidebar_, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_add_flag(sidebar_, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(workspace_, LV_OBJ_FLAG_HIDDEN);
+    }
+    lv_label_set_text(lv_obj_get_child(settings_, 0), visible ? "Back" : "Settings");
+    lv_label_set_text(subtitle_, visible ? "SETTINGS" : "SERIAL CONSOLE");
+    apply_layout();
+    refresh();
+}
+
 void View::show_keyboard(bool visible)
 {
     if (visible) {
@@ -544,48 +620,113 @@ void View::show_keyboard(bool visible)
     } else {
         lv_keyboard_set_textarea(keyboard_, nullptr);
         lv_obj_add_flag(keyboard_, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_state(input_, LV_STATE_FOCUSED);
     }
-    lv_obj_update_layout(surface_);
-    if (visible) lv_obj_scroll_to_view_recursive(input_, LV_ANIM_OFF);
+    apply_layout();
+}
+
+void View::drag_splitter(lv_event_t *e)
+{
+    const auto code = lv_event_get_code(e);
+    if (code == LV_EVENT_RELEASED || code == LV_EVENT_PRESS_LOST) {
+        dragging_splitter_ = false;
+        return;
+    }
+    auto *indev = lv_event_get_indev(e);
+    if (!indev || lv_indev_get_type(indev) != LV_INDEV_TYPE_POINTER) return;
+    lv_point_t point{};
+    lv_indev_get_point(indev, &point);
+    const auto position = wide_ ? point.x : point.y;
+    if (code == LV_EVENT_PRESSED) {
+        dragging_splitter_  = true;
+        drag_origin_        = position;
+        drag_last_position_ = position;
+        drag_receive_size_  = wide_ ? lv_obj_get_width(receiver_) : lv_obj_get_height(receiver_);
+    } else if (code == LV_EVENT_PRESSING && dragging_splitter_ && position != drag_last_position_) {
+        drag_last_position_    = position;
+        const auto available   = wide_ ? lv_obj_get_content_width(workspace_) - lv_obj_get_width(splitter_)
+                                       : lv_obj_get_content_height(workspace_) - lv_obj_get_height(splitter_);
+        const auto receive_min = wide_ ? lv_obj_get_style_min_width(receiver_, LV_PART_MAIN)
+                                       : lv_obj_get_style_min_height(receiver_, LV_PART_MAIN);
+        const auto send_min    = wide_ ? lv_obj_get_style_min_width(composer_, LV_PART_MAIN)
+                                       : lv_obj_get_style_min_height(composer_, LV_PART_MAIN);
+        if (available < receive_min + send_min) return;
+        const auto size = std::clamp(drag_receive_size_ + position - drag_origin_, receive_min, available - send_min);
+        receive_share_  = std::clamp((size * 200 + available / 2) / available, 1, 199);
+        apply_layout();
+    }
 }
 
 void View::apply_layout()
 {
     if (!body_ || !keyboard_ || laying_out_) return;
     laying_out_       = true;
+    const auto scroll = lv_obj_get_scroll_y(log_scroll_);
     const auto width  = lv_obj_get_content_width(surface_);
     const auto height = lv_obj_get_content_height(surface_);
-    wide_             = width >= 900 || (width >= 700 && height < 600);
-    lv_obj_set_height(header_, height < 600 ? 70 : 82);
+    const bool wide   = width >= 900 || (width >= 700 && height < 600);
+    if (wide != wide_) dragging_splitter_ = false;
+    wide_                       = wide;
+    const bool keyboard_visible = !lv_obj_has_flag(keyboard_, LV_OBJ_FLAG_HIDDEN);
+    const bool short_keyboard   = keyboard_visible && height < 480;
+    const bool compact          = height < 600 || width < 450;
+    lv_obj_set_height(header_, short_keyboard ? 56 : (height < 600 ? 70 : 82));
     lv_obj_set_style_pad_hor(header_, width < 450 ? 16 : 24, 0);
+    lv_obj_set_style_pad_gap(header_, width < 450 ? 8 : 12, 0);
     lv_obj_set_style_pad_hor(body_, width < 450 ? 12 : 20, 0);
-    lv_obj_set_style_pad_gap(body_, width < 450 ? 12 : 16, 0);
-    lv_obj_set_flex_flow(body_, wide_ ? LV_FLEX_FLOW_ROW : LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_width(sidebar_, wide_ ? (width < 1000 ? 300 : 334) : LV_PCT(100));
-    lv_obj_set_height(sidebar_, wide_ ? LV_PCT(100) : LV_SIZE_CONTENT);
-    if (wide_)
-        lv_obj_add_flag(sidebar_, LV_OBJ_FLAG_SCROLLABLE);
-    else
-        lv_obj_remove_flag(sidebar_, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_scroll_dir(sidebar_, LV_DIR_VER);
-    lv_obj_set_scrollbar_mode(sidebar_, LV_SCROLLBAR_MODE_AUTO);
-    lv_obj_set_width(workspace_, wide_ ? 0 : LV_PCT(100));
-    lv_obj_set_height(workspace_, wide_ ? LV_PCT(100) : LV_SIZE_CONTENT);
-    lv_obj_set_flex_grow(workspace_, wide_ ? 1 : 0);
-    if (wide_)
-        lv_obj_add_flag(workspace_, LV_OBJ_FLAG_SCROLLABLE);
-    else
-        lv_obj_remove_flag(workspace_, LV_OBJ_FLAG_SCROLLABLE);
-    lv_obj_set_scroll_dir(workspace_, LV_DIR_VER);
-    lv_obj_set_scrollbar_mode(workspace_, LV_SCROLLBAR_MODE_AUTO);
-    lv_obj_set_height(receiver_, wide_ ? 0 : 300);
-    lv_obj_set_style_min_height(receiver_, wide_ ? 240 : 260, 0);
-    lv_obj_set_flex_grow(receiver_, wide_ ? 1 : 0);
-    lv_obj_set_style_pad_all(composer_, wide_ ? 14 : 18, 0);
-    lv_obj_set_style_pad_gap(composer_, wide_ ? 8 : 12, 0);
-    lv_obj_set_height(input_, wide_ ? 60 : 76);
-    lv_obj_set_height(keyboard_, height < 600 ? 180 : 240);
+    lv_obj_set_style_pad_bottom(body_, compact ? 12 : 20, 0);
+
+    lv_obj_set_flex_flow(sidebar_, wide_ ? LV_FLEX_FLOW_ROW : LV_FLEX_FLOW_COLUMN);
+    for (auto *object : {connection_, lines_}) {
+        lv_obj_set_width(object, wide_ ? 0 : LV_PCT(100));
+        lv_obj_set_flex_grow(object, wide_ ? 1 : 0);
+    }
+    lv_obj_set_flex_flow(workspace_, wide_ ? LV_FLEX_FLOW_ROW : LV_FLEX_FLOW_COLUMN);
+    for (auto *object : {receiver_, composer_}) {
+        lv_obj_set_width(object, wide_ ? 0 : LV_PCT(100));
+        lv_obj_set_height(object, wide_ ? LV_PCT(100) : 0);
+        lv_obj_set_style_pad_all(object, short_keyboard ? 8 : (compact ? 12 : 18), 0);
+        lv_obj_set_style_pad_gap(object, short_keyboard ? 6 : (compact ? 8 : 12), 0);
+        lv_obj_set_style_min_width(object, wide_ ? 320 : 0, 0);
+    }
+    lv_obj_set_size(splitter_, wide_ ? 24 : LV_PCT(100), wide_ ? LV_PCT(100) : 24);
+    lv_obj_set_size(splitter_grip_, wide_ ? 4 : 48, wide_ ? 48 : 4);
+    lv_obj_set_flex_grow(receiver_, receive_share_);
+    lv_obj_set_flex_grow(composer_, 200 - receive_share_);
+    lv_obj_set_style_min_height(receiver_, short_keyboard ? 162 : (compact ? 248 : 280), 0);
+    lv_obj_set_style_min_height(composer_, short_keyboard ? 162 : (compact ? 220 : 244), 0);
+    lv_obj_set_style_min_height(input_, short_keyboard ? 52 : 76, 0);
+    if (short_keyboard) {
+        lv_obj_add_flag(receive_options_, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(subtitle_, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_remove_flag(receive_options_, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(subtitle_, LV_OBJ_FLAG_HIDDEN);
+    }
+    if (keyboard_visible) {
+        lv_obj_remove_flag(hide_keyboard_, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_add_flag(badge_, LV_OBJ_FLAG_HIDDEN);
+    } else {
+        lv_obj_add_flag(hide_keyboard_, LV_OBJ_FLAG_HIDDEN);
+        lv_obj_remove_flag(badge_, LV_OBJ_FLAG_HIDDEN);
+    }
+    lv_obj_set_height(keyboard_, short_keyboard ? 148 : (height < 900 ? 180 : 240));
+    lv_obj_set_style_pad_all(keyboard_, short_keyboard ? 4 : 12, 0);
+    lv_obj_set_style_pad_gap(keyboard_, short_keyboard ? 4 : 8, 0);
     lv_obj_update_layout(surface_);
+    if (keyboard_visible) {
+        // Leave room for both panes even when a serial error banner wraps.
+        const auto receive_min = lv_obj_get_style_min_height(receiver_, LV_PART_MAIN);
+        const auto send_min    = lv_obj_get_style_min_height(composer_, LV_PART_MAIN);
+        const auto pane_height = wide_ ? std::max(receive_min, send_min) : receive_min + send_min + 24;
+        const auto error_height =
+            lv_obj_has_flag(error_banner_, LV_OBJ_FLAG_HIDDEN) ? 0 : lv_obj_get_height(error_banner_);
+        const auto available = height - lv_obj_get_height(header_) - error_height - pane_height -
+                               lv_obj_get_style_pad_bottom(body_, LV_PART_MAIN);
+        lv_obj_set_height(keyboard_, std::clamp(available, 100, lv_obj_get_height(keyboard_)));
+        lv_obj_update_layout(surface_);
+    }
+    sync_log_scroll(scroll);
     fit_port_text();
     laying_out_ = false;
 }

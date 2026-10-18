@@ -10,20 +10,36 @@ network connection.
 
 ## Connect a Device
 
-1. Attach the serial adapter or board, then launch the application. Click **Scan**
-   if the device was attached after startup.
+1. Attach the serial adapter or board, then launch the application. Open
+   **Settings** at the top to access **Connection**. Click **Scan** if the device
+   was attached after startup.
 2. Select the device path and the settings required by the other endpoint.
    The defaults are **115200 baud, 8 data bits, no parity, 1 stop bit, no flow
    control** (`115200 8N1`).
 3. Click **Connect**. A successful connection changes the badge to **Connected**
    and enables sending and the available line controls.
-4. Choose the receive display format and compose a message in the send panel.
-   Select its input format and line ending, then click **Send**.
-5. Click **Disconnect** before changing the device or serial parameters.
+4. Click **Back** to return to the console. Choose the receive display format and
+   compose a message in the send panel. Select its input format and line ending,
+   then click **Send**.
+5. Open **Settings** and click **Disconnect** before changing the device or
+   serial parameters.
 
-The send field opens an on-screen keyboard; its ready/cancel action hides the
-keyboard. Sending keeps the entered text available for reuse. Portrait and
-compact layouts may require scrolling to reach the send panel.
+Opening and leaving **Settings** keeps the connection and ongoing serial I/O
+active, and preserves receive history and the send draft. Connection parameters
+and **Line control** are kept in Settings to leave the main console available
+for receiving and sending.
+
+Receive and Send share the available space equally by default: stacked in
+portrait and compact layouts, or side by side in landscape. Drag the divider
+between them up/down or left/right to adjust their sizes. Both panes retain a
+minimum usable size, and the chosen ratio survives Settings navigation, rotation,
+and keyboard changes during the session. Both text areas scroll their own content.
+
+The send field opens an on-screen keyboard while keeping both panes visible.
+Click **Hide keyboard** at the top, or the keyboard's ready/cancel action, to close
+it and restore the pane sizes. In a short landscape viewport, the receive Time
+and Auto-scroll controls are temporarily hidden until the keyboard closes.
+Sending and closing the keyboard keep the entered text available for reuse.
 
 ### Device Discovery
 
@@ -127,8 +143,8 @@ not confirm physical transmission or acknowledgment by the other device.
 
 ## RTS, DTR, and BREAK
 
-These switches require an active connection and a driver implementing the
-corresponding modem-control operations.
+Open **Settings** to reach the **Line control** switches. They require an active
+connection and a driver implementing the corresponding modem-control operations.
 
 - **RTS / DTR:** request an asserted or released output line. After connecting,
   the application attempts to release both lines and reads back their states

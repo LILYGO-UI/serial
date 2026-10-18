@@ -14,7 +14,7 @@ and does not require internet access.
 ## Preview
 
 <p>
-  <img src="assets/previews/preview1.png" alt="Serial port settings and receive console in portrait" width="200">
+  <img src="assets/previews/preview1.png" alt="Serial receive and send console in portrait" width="200">
   <img src="assets/previews/landscape.png" alt="Serial send and receive session in landscape" width="440">
 </p>
 
@@ -24,15 +24,15 @@ The landscape preview uses data from an automated pseudoterminal session.
 
 - **Port discovery:** scan common USB and UART device nodes on Linux and
   `/dev/cu.*` on macOS, then select a port from the list.
-- **Connection settings:** select the baud rate, 5–8 data bits, none/odd/even
-  parity, 1 or 2 stop bits, and none/RTS-CTS/XON-XOFF flow control.
+- **Connection settings:** open **Settings** to select the baud rate, 5–8 data
+  bits, none/odd/even parity, 1 or 2 stop bits, and none/RTS-CTS/XON-XOFF flow control.
 - **Receive console:** switch between ASCII and HEX, toggle timestamps and
   automatic scrolling, clear history, and monitor RX/TX byte counters.
 - **Sending:** independent ASCII/HEX input with optional LF, CR, or CRLF endings;
   nonblocking output queues handle partial writes.
-- **Line control:** toggle RTS, DTR, and BREAK when the driver supports them.
-- **Responsive interface:** portrait, landscape, and compact layouts with an
-  on-screen keyboard and shared AppKit fonts.
+- **Line control:** toggle RTS, DTR, and BREAK from **Settings** when the driver supports them.
+- **Responsive interface:** spacious receive and send panels, stacked in portrait
+  and side by side in landscape, with an on-screen keyboard and shared AppKit fonts.
 
 The simulator accesses real host serial devices. Device permissions and adapter
 capabilities still apply; RTS is managed by the driver when RTS/CTS flow control
@@ -41,14 +41,21 @@ data formats, buffer limits, and hardware limitations.
 
 ## Quick Start
 
-1. Connect the adapter, select **Scan**, and choose its device node.
+1. Connect the adapter, open **Settings** at the top, select **Scan**, and choose
+   its device node in **Connection**.
 2. Match the device's serial settings and select **Connect**. Defaults are
    **115200 / 8N1 / no flow control**. Disconnect before changing ports or settings.
-3. Read incoming data in the receive console. ASCII, timestamps, and automatic
-   scrolling are enabled by default. RX display and TX input formats are independent.
+3. Select **Back** to return to the receive and send console. ASCII, timestamps,
+   and automatic scrolling are enabled by default. RX display and TX input formats
+   are independent.
 4. Enter ASCII text such as `Hello`, or switch TX to HEX and enter
    `48 65 6C 6C 6F`. Choose a line ending if needed, then select **Send**.
-5. Use the line controls as needed and disconnect when finished.
+5. Open **Settings** for **Line control** as needed, or to disconnect when finished.
+
+Opening or leaving **Settings** keeps the connection, ongoing serial I/O, receive
+history, and unsent input intact. The main console gives its space to Receive and
+Send, split equally by default. Drag the divider to resize the panels. Both remain
+visible while typing; **Hide keyboard** restores the space using your chosen ratio.
 
 The receive console shows RX data only; sending updates the TX counter without
 echoing the payload into the console. ASCII input accepts 7-bit characters;
@@ -196,9 +203,10 @@ lpm test
 | `serial-render-small-landscape` | Rendering and interactions at `844 x 390` |
 
 Render tests write `serial-<viewport>.ppm` under `build/host-simulator`, plus
-`-empty`, `-send`, `-keyboard`, and `-resized` variants for each viewport
-(20 images in total). Inspect these states across all four viewports after UI
-changes; passing assertions alone does not verify the visual layout. Follow the
+`-empty`, `-send`, `-keyboard`, `-resized`, `-settings`, `-settings-resized`,
+`-settings-error`, `-keyboard-error`, and `-split` variants for each viewport (40 images in total). Inspect these
+states across all four viewports after UI changes; passing assertions alone does
+not verify the visual layout. Follow the
 [UI development guidelines](docs/01-user-interface.md) for acceptance requirements.
 
 Tests use pseudoterminals and an in-memory display, so no external serial device
