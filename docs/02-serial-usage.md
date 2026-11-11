@@ -43,7 +43,8 @@ Sending and closing the keyboard keep the entered text available for reuse.
 
 ### Device Discovery
 
-The application scans the direct children of `/dev` at startup and when **Scan**
+On Linux, the application scans the platform profile's device root (currently
+`/dev` on both CM0 and K230) at startup and when **Scan**
 is clicked. It accepts character devices, including symlinks resolving to
 character devices, with these names:
 

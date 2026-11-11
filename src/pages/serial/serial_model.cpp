@@ -1,4 +1,5 @@
 #include "pages/serial/serial_model.hpp"
+#include "platform_paths.hpp"
 
 #include <algorithm>
 #include <cerrno>
@@ -210,7 +211,7 @@ const std::vector<PortInfo>& Model::scan_ports()
         std::error_code scan_error;
         std::filesystem::directory_iterator entry(path, scan_error), end;
         if (scan_error) {
-            if (path == "/dev") error = scan_error;
+            if (path == LILYGO_UI_DEFAULT_DEV_ROOT) error = scan_error;
             return;
         }
         while (entry != end) {
@@ -222,12 +223,12 @@ const std::vector<PortInfo>& Model::scan_ports()
             }
             entry.increment(scan_error);
             if (scan_error) {
-                if (path == "/dev") error = scan_error;
+                if (path == LILYGO_UI_DEFAULT_DEV_ROOT) error = scan_error;
                 break;
             }
         }
     };
-    add_directory("/dev", true);
+    add_directory(LILYGO_UI_DEFAULT_DEV_ROOT, true);
     std::sort(found.begin(), found.end(), [](const auto& a, const auto& b) { return a.path < b.path; });
     ports_      = std::move(found);
     last_error_ = error ? "Cannot scan serial ports: " + error.message() : "";
