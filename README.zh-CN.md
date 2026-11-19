@@ -275,22 +275,15 @@ AppKit 共享字体保留上游许可声明，软件包通过 AppKit 安装辅�
 需要支持架构选择的 LPM，以及包含 `cmake/k230-debian-toolchain.cmake` 的
 AppKit 源码 SDK。原有 CM0 ARM64 和桌面模拟器 preset 仍可使用。
 
-Linux 安装 `gcc-riscv64-linux-gnu` 和 `g++-riscv64-linux-gnu`；macOS 安装
-Homebrew LLVM、LLD 和 dpkg（`brew install llvm lld dpkg`）。在当前应用仓库根目录执行：
+Linux 主机安装 `gcc-riscv64-linux-gnu` 和 `g++-riscv64-linux-gnu`，macOS 主机用 `brew install llvm lld dpkg` 安装交叉编译和打包工具。在应用仓库根目录运行打包命令。
 
 ```sh
-python3 ../cm0-appkit/tools/prepare-riscv64-sysroot.py
-cmake --preset k230-debian -DLilyGoUI_DIR="$PWD/../cm0-appkit"
 lpm pack --arch riscv64
 ```
 
-SDK 路径保存在 `build/k230-debian/CMakeCache.txt`，后续直接执行
-`lpm pack --arch riscv64`，产物为 `dist/*_riscv64.deb`。各应用共用 SDK 下的
-`.cache/k230-debian/sysroot`。可通过 `LILYGO_UI_APPKIT_DIR` 和 `LILYGO_UI_DEBIAN_SYSROOT`
-环境变量指定其他 SDK 和 Debian sysroot，也可在配置时显式传入
-`LilyGoUI_DIR` 与 `LILYGO_UI_DEBIAN_SYSROOT`。独立克隆的仓库在固定的 AppKit 子模块版本
-包含 K230 Debian 工具链后，可直接使用 `third_party/cm0-appkit`。
-`lpm pack --arch arm64` 继续使用 CM0 preset。
+`k230-debian` CMake 预设首次配置时从 `LILYGO-UI/canaan-gen` Release 下载固定版本的 Debian BSP，校验 SHA-256，并将压缩包和 `sysroot/` 保存在当前项目的 `.cache/k230-bsp/20261116T104343Z/`。之后可以离线打包，重新生成 `build/` 也会复用缓存。生成的 `.deb` 在 `dist/` 目录。
+
+执行一次 `lpm set-target k230` 后，后续直接运行 `lpm pack`。如需自定义 Debian sysroot，在首次配置前设置 `LILYGO_UI_DEBIAN_SYSROOT`，或向 CMake 传入 `-DLILYGO_UI_DEBIAN_SYSROOT=/path/to/sysroot`。AppKit 默认使用 `third_party/cm0-appkit`，可用 `-DLilyGoUI_DIR=/path/to/appkit` 指定其他版本。
 
 执行 `lpm set-target k230` 可将 K230 保存为默认打包目标，此后直接运行
 `lpm pack` 即会选择 riscv64。

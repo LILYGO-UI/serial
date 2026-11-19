@@ -299,24 +299,12 @@ riscv64. Use LPM with architecture selection support and an AppKit source SDK
 that provides `cmake/k230-debian-toolchain.cmake`. The existing CM0 ARM64 and
 host simulator presets remain available.
 
-On Linux, install `gcc-riscv64-linux-gnu` and `g++-riscv64-linux-gnu`. On macOS,
-install Homebrew LLVM, LLD and dpkg (`brew install llvm lld dpkg`). From this application's
-repository root, prepare the shared Debian sysroot and select the sibling SDK
-once:
+Install `gcc-riscv64-linux-gnu` and `g++-riscv64-linux-gnu` on Linux, or LLVM, LLD and dpkg on macOS (`brew install llvm lld dpkg`). From this application's repository, run the packaging command.
 
 ```sh
-python3 ../cm0-appkit/tools/prepare-riscv64-sysroot.py
-cmake --preset k230-debian -DLilyGoUI_DIR="$PWD/../cm0-appkit"
 lpm pack --arch riscv64
 ```
 
-The SDK path is retained in `build/k230-debian/CMakeCache.txt`; subsequent builds
-only need `lpm pack --arch riscv64`. Packages are written to `dist/*_riscv64.deb`.
-The SDK uses its shared `.cache/k230-debian/sysroot` by default. For another SDK
-or Debian sysroot, use `LILYGO_UI_APPKIT_DIR` and `LILYGO_UI_DEBIAN_SYSROOT`, or set
-`LilyGoUI_DIR` and `LILYGO_UI_DEBIAN_SYSROOT` explicitly during configuration. A fresh
-checkout can use its pinned `third_party/cm0-appkit` once that revision includes
-the K230 Debian toolchain. `lpm pack --arch arm64` selects the CM0 preset.
+The `k230-debian` CMake preset downloads the pinned Debian BSP from the `LILYGO-UI/canaan-gen` release and verifies its SHA-256. It keeps the archive and `sysroot/` in this project's `.cache/k230-bsp/20261116T104343Z/`. The next build reuses the cache offline, even with a new `build/` directory. Packages appear in `dist/`.
 
-To save K230 as the default packaging target, run `lpm set-target k230`;
-subsequent `lpm pack` commands will select riscv64.
+Run `lpm set-target k230` once to use `lpm pack` for subsequent builds. To use your own Debian sysroot, set `LILYGO_UI_DEBIAN_SYSROOT` before the first configure, or pass `-DLILYGO_UI_DEBIAN_SYSROOT=/path/to/sysroot` to CMake. The pinned `third_party/cm0-appkit` supplies the application SDK. `-DLilyGoUI_DIR=/path/to/appkit` selects another copy.
